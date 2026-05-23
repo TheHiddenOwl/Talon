@@ -1,0 +1,46 @@
+transport:
+  timeout: 30
+  max_retries: 3
+  verify_ssl: true
+  http2: true
+
+rate_limiting:
+  base_delay: 1.5
+  jitter: 0.4
+  backoff_factor: 2.0
+  max_delay: 60.0
+  token_bucket_capacity: 10.0
+
+proxy:
+  enabled: false
+  pool:
+    - "socks5://127.0.0.1:9050"  # Tor default
+  rotation_strategy: "round_robin"  # or "random"
+  rotate_every_n_requests: 5
+
+collectors:
+  dns:
+    enabled: true
+    resolvers: ["8.8.8.8", "1.1.1.1"]
+    record_types: ["A", "AAAA", "MX", "NS", "TXT", "CNAME", "SOA"]
+  whois_enabled: true
+  certs_enabled: true
+  archive_enabled: true
+  archive_limit: 100
+  shodan_enabled: false
+  shodan_api_key: ""
+  github_enabled: false
+  github_api_key: ""
+  github_dorks:
+    - "password"
+    - "secret"
+    - "api_key"
+    - "private_key"
+
+storage:
+  db_path: "talon.db"
+  export_formats: ["json", "csv", "html"]
+
+logging:
+  level: "INFO"
+  file: "talon.log"

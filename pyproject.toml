@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "talon"
+version = "0.1.0"
+description = "Stealthy async OSINT framework"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx[http2]>=0.27",    # Async HTTP client
+    "curl-cffi>=0.7",       # TLS fingerprint spoofing
+    "asyncio>=3.4",         # Async runtime
+    "dnspython>=2.6",       # DNS lookups
+    "python-whois>=0.9",    # WHOIS lookups
+    "sqlalchemy>=2.0",      # ORM for database
+    "aiosqlite>=0.20",      # Async SQLite driver
+    "apscheduler>=3.10",    # Job scheduling
+    "pydantic>=2.7",        # Data validation
+    "pydantic-settings>=2.3", # Settings management
+    "typer>=0.12",          # CLI framework
+    "rich>=13.7",           # CLI formatting and progress
+    "pyyaml>=6.0",          # YAML configuration
+    "beautifulsoup4>=4.12", # HTML parsing
+    "lxml>=5.2",            # XML/HTML parser backend
+    "pypdf>=4.2",           # PDF text extraction
+    "stem>=1.8",            # Tor control
+    "aiofiles>=23.2",       # Async file I/O
+    "respx>=0.21",          # httpx mock for tests
+    "pytest>=8.0",          # Testing framework
+    "pytest-asyncio>=0.23", # Async support for pytest
+    "shodan>=1.31",         # Shodan API collector
+    "PyGithub>=2.3",        # GitHub API for dorking
+    "aiohttp>=3.9",         # Async HTTP client for specific APIs
+    "networkx>=3.3",        # Relationship graph between findings
+    "jinja2>=3.1",          # HTML report templating
+]
+
+[tool.setuptools.packages.find]
+include = ["talon*"]
+
+[project.scripts]
+talon = "talon.cli.main:app"
