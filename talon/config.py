@@ -25,7 +25,7 @@ class RateLimitConfig(BaseModel):
 
 class ProxyConfig(BaseModel):
     enabled: bool = False
-    pool: List[str] = ["socks5://127.0.0.1:9050"]
+    pool: List[str] = []
     rotation_strategy: str = "round_robin"
     rotate_every_n_requests: int = 5
 

@@ -1,3 +1,5 @@
+import asyncio
+import concurrent.futures
 import time
 from typing import Any, Dict, List
 from github import Github
@@ -8,6 +10,10 @@ class GithubCollector:
         self.api_key = api_key
         self.dorks = dorks
         self.api = Github(api_key) if api_key else None
+        self._executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+
+    def __del__(self):
+        self._executor.shutdown(wait=False)
 
     async def collect(self, domain: str) -> CollectorResult:
         if not self.api:
@@ -16,10 +22,14 @@ class GithubCollector:
         start_time = time.monotonic()
         findings = []
         try:
+            loop = asyncio.get_event_loop()
             for dork in self.dorks:
                 query = f"{dork} {domain}"
-                result = self.api.search_code(query)
-                for item in result[:10]: # limit to top 10 per dork
+                result = await loop.run_in_executor(
+                    self._executor,
+                    lambda: list(self.api.search_code(query)[:10])
+                )
+                for item in result:
                     findings.append({
                         "dork": dork,
                         "url": item.html_url,

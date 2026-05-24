@@ -5,7 +5,9 @@ transport:
   http2: true
 
 rate_limiting:
-  base_delay: 1.5
+  base_delay: 1.5   # Applied to every request including the first.
+                    # Intentional: simulates human pre-request latency.
+                    # Lower = faster but more detectable.
   jitter: 0.4
   backoff_factor: 2.0
   max_delay: 60.0

@@ -1,3 +1,5 @@
+import asyncio
+import concurrent.futures
 import time
 import shodan
 from typing import Any, Dict, List, Optional
@@ -7,6 +9,10 @@ class ShodanCollector:
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.api = shodan.Shodan(api_key) if api_key else None
+        self._executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+
+    def __del__(self):
+        self._executor.shutdown(wait=False)
 
     async def collect(self, domain: str) -> CollectorResult:
         if not self.api:
@@ -14,7 +20,12 @@ class ShodanCollector:
 
         start_time = time.monotonic()
         try:
-            results = self.api.search(f'hostname:{domain}')
+            loop = asyncio.get_event_loop()
+            results = await loop.run_in_executor(
+                self._executor,
+                self.api.search,
+                f'hostname:{domain}'
+            )
             duration_ms = int((time.monotonic() - start_time) * 1000)
 
             return CollectorResult(

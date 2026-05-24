@@ -110,24 +110,11 @@ class StealthClient:
         )
 
     async def _httpx_get(self, url: str, headers: Dict[str, str], params: Optional[Dict[str, Any]], proxy: Optional[str]):
+        """
+        Internal fallback path. Not proxy-aware. Do not use for external targets.
+        """
         if not self._httpx_client:
             raise RuntimeError("StealthClient must be used as an async context manager")
-
-        # httpx.AsyncClient handles proxies at init time, but for the ProxyPool to work
-        # per-request, we might need to handle it differently if we want to rotate
-        # while using the same client. However, httpx.AsyncClient doesn't support
-        # 'proxy' on individual requests easily.
-
-        # If rotation is required for httpx as well, we might need to recreate the client
-        # OR use a more advanced proxy handler. For now, we'll use the one from init
-        # or recreate if it changed.
-
-        # Given the "Stealth" requirement, rotation is key.
-        # But connection pooling is also key.
-
-        # For now, let's keep it simple: use the pooled client without per-request proxy
-        # override for httpx, as rotation is primarily handled via curl_session which
-        # does support it.
 
         return await self._httpx_client.get(
             url,
