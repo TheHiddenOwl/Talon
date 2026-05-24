@@ -24,7 +24,6 @@ class ArchiveCollector:
                     "collapse": "urlkey",
                     "limit": self.limit,
                 },
-                use_curl=False,
             )
             duration_ms = int((time.monotonic() - start_time) * 1000)
 

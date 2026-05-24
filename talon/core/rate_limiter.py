@@ -47,6 +47,12 @@ class AdaptiveRateLimiter:
         self._lock = asyncio.Lock()
 
     async def acquire(self, domain: str) -> None:
+        """
+        NOTE: base_delay is applied to ALL requests including the first per domain.
+        This is intentional — it simulates organic human latency before the initial
+        request. Removing it would create a detectable "instant first request" pattern.
+        Adjust base_delay in config to tune aggressiveness vs stealth.
+        """
         async with self._lock:
             bucket = self._buckets[domain]
             wait = bucket.consume()

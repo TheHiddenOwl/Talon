@@ -21,10 +21,10 @@ async def test_stealth_client_retry_on_429():
     config.rate_limiting.backoff_factor = 0.1
     async with StealthClient(config) as client:
         with respx.mock:
-            route = respx.get("https://example.com/").side_effect = [
+            respx.get("https://example.com/").mock(side_effect=[
                 httpx.Response(429),
                 httpx.Response(200, text="success")
-            ]
+            ])
             response = await client.get("https://example.com/", use_curl=False)
             assert response.status_code == 200
             assert response.text == "success"

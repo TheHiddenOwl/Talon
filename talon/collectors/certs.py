@@ -17,7 +17,6 @@ class CertCollector:
             response = await self.client.get(
                 self.CRT_SH_URL,
                 params={"q": f"%.{domain}", "output": "json"},
-                use_curl=False,
             )
             duration_ms = int((time.monotonic() - start_time) * 1000)
 
