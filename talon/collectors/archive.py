@@ -35,8 +35,9 @@ class ArchiveCollector:
                     raw_response=response.text
                 )
 
-            rows = response.json()
-            if not rows:
+            from talon.parsers.json import JsonParser
+            rows = JsonParser.parse(response.text)
+            if rows is None or not rows:
                 return CollectorResult(
                     data=[],
                     status_code=200,

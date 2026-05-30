@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Talon Report - {{ domain }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; background: #f4f4f9; color: #333; }
+        h1 { color: #2c3e50; }
+        .summary { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .finding { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 10px; border-left: 5px solid #3498db; }
+        .collector { font-weight: bold; color: #3498db; margin-bottom: 5px; }
+        pre { background: #f8f8f8; padding: 10px; overflow-x: auto; font-size: 0.9em; }
+        .timestamp { font-size: 0.8em; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <h1>Talon Recon Report: {{ domain }}</h1>
+    <div class="summary">
+        <p><strong>Total Findings:</strong> {{ findings|length }}</p>
+        <p><strong>Generated At:</strong> {{ generated_at }}</p>
+    </div>
+
+    {% for finding in findings %}
+    <div class="finding">
+        <div class="collector">{{ finding.collector.upper() }}</div>
+        <div class="timestamp">Detected: {{ finding.created_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC</div>
+        <pre>{{ finding.data | tojson(indent=2) }}</pre>
+    </div>
+    {% endfor %}
+</body>
+</html>

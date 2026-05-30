@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Type, Tuple, Union
 from pathlib import Path
 import yaml
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, SecretStr
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -41,9 +41,9 @@ class CollectorsConfig(BaseModel):
     archive_enabled: bool = True
     archive_limit: int = 100
     shodan_enabled: bool = False
-    shodan_api_key: str = ""
+    shodan_api_key: SecretStr = SecretStr("")
     github_enabled: bool = False
-    github_api_key: str = ""
+    github_api_key: SecretStr = SecretStr("")
     github_dorks: List[str] = ["password", "secret", "api_key", "private_key"]
 
 class StorageConfig(BaseModel):
