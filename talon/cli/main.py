@@ -9,7 +9,10 @@ from rich.logging import RichHandler
 from talon.collectors.archive import ArchiveCollector
 from talon.collectors.certs import CertCollector
 from talon.collectors.dns import DnsCollector
+from talon.collectors.github import GithubCollector
+from talon.collectors.shodan import ShodanCollector
 from talon.collectors.whois import WhoisCollector
+from talon.core.scheduler import TalonScheduler
 from talon.config import TalonConfig
 from talon.storage.database import Database
 from talon.transport.client import StealthClient
@@ -62,18 +65,21 @@ async def _run_scan(domain: str, config_path: Optional[str]):
     await db.init()
 
     async with StealthClient(config) as client:
-        cfg = config.collectors
         console.rule(f"[bold cyan]Talon scan: {domain}")
 
         tasks: List[Tuple[str, any]] = []
-        if cfg.dns.enabled:
-            tasks.append(("dns", DnsCollector(cfg.dns).collect(domain)))
-        if cfg.whois_enabled:
+        if config.collectors.dns.enabled:
+            tasks.append(("dns", DnsCollector(config.collectors.dns).collect(domain)))
+        if config.collectors.whois_enabled:
             tasks.append(("whois", WhoisCollector().collect(domain)))
-        if cfg.certs_enabled:
+        if config.collectors.certs_enabled:
             tasks.append(("certs", CertCollector(client).collect(domain)))
-        if cfg.archive_enabled:
-            tasks.append(("archive", ArchiveCollector(client, cfg.archive_limit).collect(domain)))
+        if config.collectors.archive_enabled:
+            tasks.append(("archive", ArchiveCollector(client, config.collectors.archive_limit).collect(domain)))
+        if config.collectors.shodan_enabled:
+            tasks.append(("shodan", ShodanCollector(config.collectors.shodan_api_key.get_secret_value()).collect(domain)))
+        if config.collectors.github_enabled:
+            tasks.append(("github", GithubCollector(config.collectors.github_api_key.get_secret_value(), config.collectors.github_dorks).collect(domain)))
 
         for name, coro in tasks:
             with console.status(f"[cyan]Running {name} collector..."):
@@ -152,17 +158,84 @@ def collect_archive(
     asyncio.run(run())
 
 @app.command()
+def config_check(
+    config_path: Optional[str] = typer.Option(None, "--config", "-c", help="Path to custom config YAML"),
+):
+    """Validate and display the resolved configuration."""
+    config = TalonConfig.load_config(config_path)
+    console.print(config.model_dump())
+
+@app.command()
+def report(
+    domain: str = typer.Argument(..., help="Domain to generate report for"),
+    fmt: str = typer.Option("html", "--format", "-f", help="Report format (html, json, csv)"),
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
+):
+    """Generate a summary report of findings."""
+    asyncio.run(_run_report(domain, fmt, output))
+
+async def _run_report(domain: str, fmt: str, output: Optional[str]):
+    config = TalonConfig.load_config()
+    db = Database(config.storage.db_path)
+    await db.init()
+    findings = await db.get_findings(domain)
+
+    if not findings:
+        console.print(f"[yellow]No findings found for {domain}[/]")
+        return
+
+    from talon.reports.renderer import ReportRenderer
+    renderer = ReportRenderer()
+
+    from pathlib import Path
+    out_path = Path(output).resolve() if output else None
+
+    try:
+        if fmt == "html":
+            content = renderer.render_html(domain, findings)
+            if out_path:
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(out_path, "w") as f:
+                    f.write(content)
+                console.print(f"[green]Report exported to {out_path}[/]")
+            else:
+                console.print(content)
+        elif fmt == "json":
+            content = renderer.render_json(findings)
+            if out_path:
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(out_path, "w") as f:
+                    f.write(content)
+                console.print(f"[green]Report exported to {out_path}[/]")
+            else:
+                console.print(content)
+        elif fmt == "csv":
+            if not out_path:
+                console.print("[red]Error: --output is required for CSV format[/]")
+                raise typer.Exit(1)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            renderer.render_csv(findings, out_path)
+            console.print(f"[green]Report exported to {out_path}[/]")
+        else:
+            console.print(f"[red]Unsupported format: {fmt}[/]")
+            raise typer.Exit(1)
+    except OSError as e:
+        console.print(f"[red]Failed to write report: {e}[/]")
+        raise typer.Exit(1)
+
+@app.command()
 def export(
     domain: str = typer.Argument(..., help="Domain to export findings for"),
-    format: str = typer.Option("json", "--format", "-f", help="Export format (json, csv)"),
+    fmt: str = typer.Option("json", "--format", "-f", help="Export format (json, csv)"),
     output: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path"),
 ):
     """Export findings from the database."""
-    asyncio.run(_run_export(domain, format, output))
+    asyncio.run(_run_export(domain, fmt, output))
 
-async def _run_export(domain: str, format: str, output: Optional[str]):
+async def _run_export(domain: str, fmt: str, output: Optional[str]):
     config = TalonConfig.load_config()
     db = Database(config.storage.db_path)
+    await db.init()
     findings = await db.get_findings(domain)
 
     if not findings:
@@ -182,9 +255,16 @@ async def _run_export(domain: str, format: str, output: Optional[str]):
 
     output_content = json.dumps(data, indent=2)
     if output:
-        with open(output, "w") as f:
-            f.write(output_content)
-        console.print(f"[green]Exported to {output}[/]")
+        from pathlib import Path
+        out_path = Path(output).resolve()
+        try:
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(out_path, "w") as f:
+                f.write(output_content)
+            console.print(f"[green]Exported to {out_path}[/]")
+        except OSError as e:
+            console.print(f"[red]Failed to write output: {e}[/]")
+            raise typer.Exit(1)
     else:
         console.print(output_content)
 

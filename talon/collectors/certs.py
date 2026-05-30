@@ -28,7 +28,16 @@ class CertCollector:
                     raw_response=response.text
                 )
 
-            records = response.json()
+            from talon.parsers.json import JsonParser
+            records = JsonParser.parse(response.text)
+            if records is None:
+                return CollectorResult(
+                    data=[],
+                    status_code=200,
+                    duration_ms=duration_ms,
+                    raw_response=response.text
+                )
+
             seen = set()
             unique = []
             for record in records:

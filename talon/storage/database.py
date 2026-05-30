@@ -1,5 +1,5 @@
 import zlib
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from sqlalchemy import JSON, DateTime, Integer, String, Text, LargeBinary
@@ -22,7 +22,7 @@ class Finding(Base):
     status_code: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     proxy_used: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     duration_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class Database:

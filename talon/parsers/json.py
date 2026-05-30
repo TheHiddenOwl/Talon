@@ -1,16 +1,17 @@
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 class JsonParser:
     @staticmethod
     def parse(data: str) -> Optional[Any]:
+        """
+        Safely parse a JSON string. Returns None on failure
+        instead of raising, so callers can handle gracefully.
+        """
         try:
             return json.loads(data)
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, TypeError):
             return None
 
-    @staticmethod
-    def validate(data: Any, schema: Dict[str, Any]) -> bool:
-        # Simplified validation logic
-        # In a real scenario, use jsonschema library
-        return True
+    # TODO: implement validate() with jsonschema when collector
+    # output schemas are formalised in Phase 4.

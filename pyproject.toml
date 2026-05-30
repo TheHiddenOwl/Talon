@@ -39,5 +39,13 @@ dependencies = [
 [tool.setuptools.packages.find]
 include = ["talon*"]
 
+[tool.setuptools.package-data]
+talon = ["reports/templates/*.html"]
+
+[tool.pytest.ini_options]
+markers = [
+    "live: marks tests as live network tests (skipped by default, use --run-live to run)",
+]
+
 [project.scripts]
 talon = "talon.cli.main:app"

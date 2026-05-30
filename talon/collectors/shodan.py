@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 from talon.collectors.base import CollectorResult
 
 class ShodanCollector:
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: Optional[str]):
         self.api_key = api_key
         self.api = shodan.Shodan(api_key) if api_key else None
         self._executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)

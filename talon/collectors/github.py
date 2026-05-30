@@ -1,12 +1,12 @@
 import asyncio
 import concurrent.futures
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from github import Github
 from talon.collectors.base import CollectorResult
 
 class GithubCollector:
-    def __init__(self, api_key: str, dorks: List[str]):
+    def __init__(self, api_key: Optional[str], dorks: List[str]):
         self.api_key = api_key
         self.dorks = dorks
         self.api = Github(api_key) if api_key else None
@@ -27,7 +27,7 @@ class GithubCollector:
                 query = f"{dork} {domain}"
                 result = await loop.run_in_executor(
                     self._executor,
-                    lambda: list(self.api.search_code(query)[:10])
+                    lambda q=query: list(self.api.search_code(q)[:10])
                 )
                 for item in result:
                     findings.append({

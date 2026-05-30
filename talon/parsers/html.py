@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 from typing import Dict, List, Optional
 
+# TODO: wire extract_metadata() into a SnapshotCollector in Phase 4.
+
 class HtmlParser:
     @staticmethod
     def extract_links(html: str, base_url: Optional[str] = None) -> List[str]:
